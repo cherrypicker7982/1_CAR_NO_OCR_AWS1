@@ -1,7 +1,13 @@
+# CPU 전용 PyTorch/torchvision 설치용 인덱스 추가
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu
+
 fastapi
 uvicorn
-easyocr
+easyocr==1.7.1
 python-multipart
-opencv-python
+opencv-python-headless==4.10.0.84
 numpy
 Pillow
