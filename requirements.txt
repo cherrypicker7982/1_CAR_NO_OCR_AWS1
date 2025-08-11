@@ -4,10 +4,10 @@
 torch==2.2.2+cpu
 torchvision==0.17.2+cpu
 
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+easyocr==1.7.1
+Pillow
 fastapi
 uvicorn
-easyocr==1.7.1
 python-multipart
-opencv-python-headless==4.10.0.84
-numpy
-Pillow
