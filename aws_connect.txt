@@ -1,0 +1,23 @@
+1. EC2에 접속
+ssh -i "ec2_car_ocr.pem" ubuntu@54.252.130.252
+
+
+2.git pull 업데이트
+cd ~/1_CAR_NO_OCR_AWS1
+git pull origin main
+
+3.도커 업데이트.
+# 1) 기존 컨테이너 정리(떠있으면)
+docker rm -f lp-ocr 2>/dev/null || true
+
+
+# 2) 이미지 다시 빌드 (requirements 안 바꿨으면 --no-cache 생략 가능)
+docker build -t lp-ocr .
+docker build --no-cache -t lp-ocr .
+
+# 3) 컨테이너 재실행
+docker run -d --name lp-ocr --restart=always -p 80:8000 lp-ocr
+
+
+#root로 권한 변경법
+sudo su 

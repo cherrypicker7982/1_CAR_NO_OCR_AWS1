@@ -11,6 +11,9 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from threading import Thread
 
+# easyocr 임포트는 파일 최상단에서 한 번만 합니다.
+import easyocr
+
 # --- 환경 변수에서 설정 읽기 ---
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(',')
@@ -50,17 +53,14 @@ def root():
     return FileResponse(Path(__file__).parent / "index.html")
 
 # --- EasyOCR 워밍업 및 상태 관리 ---
-# Render와 달리 AWS 환경에서는 콜드 스타트가 덜 빈번하거나, 
-# Fargate/EC2 같은 환경에서는 아예 발생하지 않을 수 있습니다. 
-# 하지만 Lambda나 다른 서버리스 환경을 고려해 워밍업 로직은 유지하되,
-# 더 간결하게 정리했습니다.
 OCR_READY = False
 OCR_LOADING = False
 OCR_ERROR = None
+reader = None  # EasyOCR reader 객체를 저장할 전역 변수 추가
 
 def _warmup_easyocr():
     """Background task to load the EasyOCR model."""
-    global OCR_READY, OCR_LOADING, OCR_ERROR
+    global OCR_READY, OCR_LOADING, OCR_ERROR, reader
     
     if OCR_READY or OCR_LOADING:
         log.info("OCR model is already being loaded or is ready.")
@@ -72,11 +72,11 @@ def _warmup_easyocr():
     log.info("Starting EasyOCR model warmup...")
 
     try:
-        import easyocr
         reader = easyocr.Reader(['en', 'ko'], gpu=USE_GPU, verbose=False)
         
-        # ⚠️ 이 부분의 readtext 호출을 제거하거나 주석 처리합니다.
-        # reader.readtext('dummy.png', detail=0) # 파일이 없으므로 오류 발생
+        # 실제 워밍업을 위해 간단한 이미지 파일을 읽어볼 수 있지만,
+        # 파일이 없을 경우 오류가 발생하므로 주석 처리하는 것이 더 안전합니다.
+        # reader.readtext('dummy.png', detail=0)
 
         log.info("EasyOCR reader initialized successfully.")
         
@@ -112,10 +112,13 @@ def _get_file_suffix(filename: str, content_type: str) -> str:
 
 def _run_ocr_blocking(temp_path: str):
     """Blocking OCR logic to be run in a separate thread."""
+    global reader # 전역 reader 객체를 사용하도록 선언
     try:
         from ocr_core_combine_3 import recognize_plate_combined
-        return recognize_plate_combined(temp_path, debug=False)
+        # recognize_plate_combined 함수에 reader 객체를 전달하도록 수정
+        return recognize_plate_combined(temp_path, debug=False, reader=reader)
     finally:
+        # 이 부분은 변경 없음
         os.remove(temp_path)
         log.info(f"Temporary file removed: {temp_path}")
 
@@ -176,7 +179,7 @@ async def recognize_license_plate(
         )
         return result
     except ImportError:
-        log.error("OCR module 'ocr_core_combine_2' not found.")
+        log.error("OCR module 'ocr_core_combine_3' not found.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="OCR module not found.")
     except asyncio.TimeoutError:
         log.error(f"OCR process timed out after {TIMEOUT_SECONDS} seconds.")
