@@ -113,7 +113,7 @@ def _get_file_suffix(filename: str, content_type: str) -> str:
 def _run_ocr_blocking(temp_path: str):
     """Blocking OCR logic to be run in a separate thread."""
     try:
-        from ocr_core_combine_2 import recognize_plate_combined
+        from ocr_core_combine_3 import recognize_plate_combined
         return recognize_plate_combined(temp_path, debug=False)
     finally:
         os.remove(temp_path)

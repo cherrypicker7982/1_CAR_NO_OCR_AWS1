@@ -32,11 +32,11 @@
   <div id="status">상태: <span id="status-badge" class="badge warn">확인 중…</span></div>
   <div id="hint">※ 배포 직후엔 모델 로딩 때문에 잠시(<code>30~90초</code>) 걸릴 수 있어요.</div>
 
-  <div id="actions">
+  <!-- <div id="actions">
     <button id="pick">이미지 선택</button>
     <button id="warm" class="secondary">워밍업 트리거</button>
     <button id="dry" class="secondary">드라이런(업로드만)</button>
-  </div>
+  </div> -->
   <input type="file" id="file-input" accept="image/*" style="display:none"/>
 
   <div id="ocr-container">
@@ -59,10 +59,10 @@
     const resultEl = document.getElementById('result');
     const loader = document.getElementById('loader');
     const statusBadge = document.getElementById('status-badge');
-    const btnPick = document.getElementById('pick');
-    const btnWarm = document.getElementById('warm');
-    const btnDry  = document.getElementById('dry');
-    const allButtons = [btnPick, btnWarm, btnDry];
+    // const btnPick = document.getElementById('pick');
+    // const btnWarm = document.getElementById('warm');
+    // const btnDry  = document.getElementById('dry');
+    // const allButtons = [btnPick, btnWarm, btnDry];
 
     // --- 공통 유틸 ---
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -154,7 +154,7 @@
 
     function showLoading(on) {
       loader.style.display = on ? 'block' : 'none';
-      allButtons.forEach(btn => btn.disabled = on);
+      // allButtons.forEach(btn => btn.disabled = on);
       container.style.pointerEvents = on ? 'none' : 'auto';
     }
     
@@ -169,9 +169,9 @@
     }
 
     // --- 이벤트 바인딩 ---
-    btnPick.addEventListener('click', () => fileInput.click());
+    // btnPick.addEventListener('click', () => fileInput.click());
     
-    btnWarm.addEventListener('click', async () => {
+    <!-- btnWarm.addEventListener('click', async () => {
       showLoading(true);
       resultEl.textContent = '워밍업 트리거를 보냈습니다. 모델 로딩을 기다립니다...';
       try {
@@ -189,7 +189,7 @@
     btnDry.addEventListener('click', async () => {
       const file = await pickFile();
       if (file) await runFlow(file, { dry: true });
-    });
+    }); -->
 
     async function pickFile() {
       return new Promise(resolve => {
