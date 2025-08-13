@@ -5,162 +5,152 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>차량 번호판 OCR</title>
   <style>
-    body{font-family:Arial, sans-serif;display:flex;justify-content:center;align-items:center;flex-direction:column;min-height:100vh;margin:0;background:#f0f2f5}
-    #ocr-container{width:800px;max-width:90vw;height:400px;border:2px dashed #ccc;border-radius:10px;display:flex;justify-content:center;align-items:center;flex-direction:column;cursor:pointer;position:relative;background:#fff;overflow:hidden;box-shadow:0 4px 8px rgba(0,0,0,.1)}
+    :root{
+      --box-w: 50vw;          /* 기본 가로 폭: 화면의 50% */
+      --ratio: 0.75;          /* 4:3 비율 = 0.75 */
+      --max-w: 900px;         /* 너무 커지지 않도록 상한 */
+      --min-w: 280px;         /* 너무 작지 않도록 하한 */
+    }
+    body{
+      font-family: Arial, sans-serif;
+      background:#f0f2f5;
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:24px 16px 48px;
+    }
+    h2{ margin:8px 0 4px; }
+    #hint{font-size:.9rem;color:#666;margin:4px 0 16px;}
+    #status{margin:4px 0 12px;font-size:.95rem}
+    .badge{display:inline-block;padding:4px 8px;border-radius:6px;background:#eee}
+    .ok{background:#e6ffed;color:#0a7c2f}.warn{background:#fff4e5;color:#8a5a00}.err{background:#ffe6e6;color:#a40}
+    #actions{margin:10px 0 16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    button{padding:10px 14px;border:none;border-radius:8px;background:#1f6feb;color:#fff;cursor:pointer}
+    button.secondary{background:#666}
+    button:disabled{opacity:.5;cursor:not-allowed}
+
+    /* 업로드 박스 (4:3, 가로 50%) */
+    .box{
+      width:min(max(var(--box-w), var(--min-w)), var(--max-w));
+      height:calc(min(max(var(--box-w), var(--min-w)), var(--max-w)) * var(--ratio));
+      background:#fff;
+      border:2px dashed #c9d1d9;
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      position:relative;overflow:hidden;
+      box-shadow:0 4px 8px rgba(0,0,0,.08);
+      transition: border-color .15s ease;
+    }
+    .box.dragover{ border-color:#1f6feb; }
+    #upload-text{color:#666;font-size:1rem;position:absolute;pointer-events:none;text-align:center;padding:0 12px}
     #image-preview{max-width:100%;max-height:100%;display:none;object-fit:contain}
-    #upload-text{color:#888;font-size:1.2rem;position:absolute;pointer-events:none}
-    #result-container{margin-top:20px;width:800px;max-width:90vw;padding:15px;background:#fff;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1)}
-    #result{font-size:1.1rem;color:#333;white-space:pre-wrap;word-break:break-word}
+
+    /* 결과 박스도 같은 폭, 내용은 자동 높이 */
+    #result-container{
+      margin-top:16px;
+      width:min(max(var(--box-w), var(--min-w)), var(--max-w));
+      background:#fff;border-radius:12px;
+      box-shadow:0 4px 8px rgba(0,0,0,.08);
+      padding:14px;
+    }
+    #result-title{margin:0 0 8px 0}
+    #result{font-size:.95rem;color:#333;white-space:pre-wrap;word-break:break-word}
     #loader{border:4px solid #f3f3f3;border-top:4px solid #3498db;border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;display:none;margin-top:10px}
     @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-    #status{margin:10px 0;font-size:.95rem}
-    .badge{display:inline-block;padding:4px 8px;border-radius:6px;font-weight:bold;}.ok{background:#e6ffed;color:#0a7c2f}.warn{background:#fff4e5;color:#8a5a00}.err{background:#ffe6e6;color:#a40}
-    #actions{margin:10px 0;display:flex;gap:8px;flex-wrap:wrap}
-    button{padding:8px 12px;border:none;border-radius:8px;background:#1f6feb;color:#fff;cursor:pointer;transition:background-color .2s}
-    button:hover{background:#185ac9}
-    button:disabled{background:#aaa;cursor:not-allowed}
-    button.secondary{background:#666}
-    button.secondary:hover{background:#555}
-    #hint{font-size:.9rem;color:#666;margin:6px 0}
-    code{background:#f6f8fa;border-radius:6px;padding:2px 6px}
-    @media (max-width: 820px) { #ocr-container, #result-container{width:95vw;} }
+
+    @media (max-width: 700px){
+      :root{ --box-w: 90vw; } /* 작은 화면에서는 90%로 */
+    }
   </style>
 </head>
 <body>
-
   <h2>차량 번호판 OCR</h2>
   <div id="status">상태: <span id="status-badge" class="badge warn">확인 중…</span></div>
-  <div id="hint">※ 배포 직후엔 모델 로딩 때문에 잠시(<code>30~90초</code>) 걸릴 수 있어요.</div>
+  <div id="hint">※ 배포 직후엔 모델 로딩 때문에 잠시(30~90초) 걸릴 수 있어요.</div>
 
-  <!-- <div id="actions">
+  <div id="actions">
     <button id="pick">이미지 선택</button>
-    <button id="warm" class="secondary">워밍업 트리거</button>
-    <button id="dry" class="secondary">드라이런(업로드만)</button>
-  </div> -->
-  <input type="file" id="file-input" accept="image/*" style="display:none"/>
+    <button id="warm" class="secondary">워밍업</button>
+    <input type="file" id="file-input" accept="image/*" style="display:none"/>
+  </div>
 
-  <div id="ocr-container">
+  <!-- 업로드 박스 (4:3, 가로 50%) -->
+  <div id="ocr-box" class="box">
     <span id="upload-text">여기에 이미지를 놓거나 클릭해서 업로드</span>
-    <img id="image-preview" alt="업로드된 이미지 미리보기"/>
+    <img id="image-preview" alt="미리보기"/>
   </div>
 
   <div id="loader"></div>
 
   <div id="result-container">
-    <h3>인식 결과:</h3>
-    <pre id="result">이미지를 업로드하면 결과가 표시됩니다.</pre>
+    <h3 id="result-title">인식 결과(JSON 그대로):</h3>
+    <pre id="result">이미지를 업로드하면 결과 JSON이 그대로 표시됩니다.</pre>
   </div>
 
   <script>
-    const container = document.getElementById('ocr-container');
+    const box = document.getElementById('ocr-box');
     const fileInput = document.getElementById('file-input');
     const preview = document.getElementById('image-preview');
     const uploadText = document.getElementById('upload-text');
     const resultEl = document.getElementById('result');
     const loader = document.getElementById('loader');
     const statusBadge = document.getElementById('status-badge');
-    // const btnPick = document.getElementById('pick');
-    // const btnWarm = document.getElementById('warm');
-    // const btnDry  = document.getElementById('dry');
-    // const allButtons = [btnPick, btnWarm, btnDry];
+    const btnPick = document.getElementById('pick');
+    const btnWarm = document.getElementById('warm');
 
-    // --- 공통 유틸 ---
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
 
-    function setStatus(status) {
-      switch(status) {
-        case 'ready':
-          statusBadge.textContent = 'Ready';
-          statusBadge.className = 'badge ok';
-          break;
-        case 'loading':
-          statusBadge.textContent = 'Warming up…';
-          statusBadge.className = 'badge warn';
-          break;
-        case 'error':
-          statusBadge.textContent = '에러';
-          statusBadge.className = 'badge err';
-          break;
-        default:
-          statusBadge.textContent = '확인 중…';
-          statusBadge.className = 'badge warn';
+    function setStatus(state) {
+      // state: 'ready' | 'loading' | 'error'
+      if (state === 'ready') {
+        statusBadge.textContent = 'Ready';
+        statusBadge.className = 'badge ok';
+        btnPick.disabled = false;
+      } else if (state === 'loading') {
+        statusBadge.textContent = 'Warming up…';
+        statusBadge.className = 'badge warn';
+        btnPick.disabled = true;
+      } else { // error or unknown
+        statusBadge.textContent = '에러';
+        statusBadge.className = 'badge err';
+        btnPick.disabled = true;
       }
     }
 
+    // /status 응답 스키마(신/구) 모두 지원
     async function getStatus() {
       try {
-        const r = await fetch('/status', {cache: 'no-store'});
-        if (!r.ok) throw new Error(`Status check failed with code ${r.status}`);
+        const r = await fetch('/status', {cache:'no-store'});
+        if (!r.ok) throw new Error('status ' + r.status);
         const j = await r.json();
-        setStatus(j.status);
-        return j.status === 'ready';
+        const legacy = (typeof j.easyocr_ready === 'boolean') ? (j.easyocr_ready ? 'ready' : 'loading') : null;
+        const normalized = j.status || legacy || 'loading';
+        setStatus(normalized);
+        return normalized;
       } catch (e) {
-        console.error('Failed to fetch server status:', e);
         setStatus('error');
-        return false;
+        return 'error';
       }
     }
 
-    async function ensureReady({ maxWaitMs = 120000 } = {}) {
+    async function ensureReady({maxWaitMs=120000}={}) {
       const start = Date.now();
-      while (Date.now() - start < maxWaitMs) {
-        const isReady = await getStatus();
-        if (isReady) return true;
-        await sleep(3000);
+      while (Date.now()-start < maxWaitMs) {
+        const st = await getStatus();
+        if (st === 'ready') return true;
+        await sleep(2000);
       }
       return false;
     }
 
-    async function shrinkImageIfNeeded(file, maxDim = 1600, quality = 0.9) {
-      try {
-        if (!file || !file.type.startsWith('image/')) return file;
-        
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        await new Promise((res, rej) => { img.onload = () => res(); img.onerror = rej; img.src = url; });
-        
-        const { width, height } = img;
-        if (Math.max(width, height) <= maxDim) { URL.revokeObjectURL(url); return file; }
-
-        const ratio = width > height ? maxDim / width : maxDim / height;
-        const w = Math.round(width * ratio);
-        const h = Math.round(height * ratio);
-
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        URL.revokeObjectURL(url);
-
-        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
-        return new File([blob], (file.name || 'image') + '.jpg', { type: 'image/jpeg' });
-      } catch (e) {
-        console.error('Image shrinking failed, sending original file:', e);
-        return file;
-      }
-    }
-
-    async function fetchWithTimeout(resource, options = {}) {
-      const { timeout = 120000 } = options;
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeout);
-      try {
-        return await fetch(resource, { ...options, signal: controller.signal });
-      } finally {
-        clearTimeout(id);
-      }
-    }
-
-    function showLoading(on) {
+    function showLoading(on){
       loader.style.display = on ? 'block' : 'none';
-      // allButtons.forEach(btn => btn.disabled = on);
-      container.style.pointerEvents = on ? 'none' : 'auto';
     }
-    
-    function showPreview(file) {
+    function showPreview(file){
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = (e)=>{
         preview.src = e.target.result;
         preview.style.display = 'block';
         uploadText.style.display = 'none';
@@ -168,107 +158,86 @@
       reader.readAsDataURL(file);
     }
 
-    // --- 이벤트 바인딩 ---
-    // btnPick.addEventListener('click', () => fileInput.click());
-    
-    <!-- btnWarm.addEventListener('click', async () => {
-      showLoading(true);
-      resultEl.textContent = '워밍업 트리거를 보냈습니다. 모델 로딩을 기다립니다...';
-      try {
-        await fetch('/_warm', { method: 'POST' });
-        await sleep(1000);
-        await ensureReady({maxWaitMs: 90000});
-      } catch(e) {
-        resultEl.textContent = `워밍업 요청 실패: ${e.message}`;
-        console.error(e);
-      } finally {
-        showLoading(false);
-      }
-    });
-    
-    btnDry.addEventListener('click', async () => {
-      const file = await pickFile();
-      if (file) await runFlow(file, { dry: true });
-    }); -->
-
-    async function pickFile() {
-      return new Promise(resolve => {
-        const onChange = (e) => {
-          const f = e.target.files && e.target.files[0];
-          fileInput.removeEventListener('change', onChange);
-          fileInput.value = ''; // Reset for re-upload
-          resolve(f || null);
-        };
-        fileInput.addEventListener('change', onChange, { once: true });
-        fileInput.click();
-      });
+    async function postOCR(file){
+      // 백엔드 스펙에 맞춰 필드명은 image_file, 엔드포인트는 /ocr/license-plate
+      const fd = new FormData();
+      fd.append('image_file', file);
+      const r = await fetch('/ocr/license-plate', { method: 'POST', body: fd });
+      const text = await r.text();
+      // 가변 응답 방어: 파싱 시도 후, 실패하면 원문 출력
+      try { return JSON.parse(text); } catch { return text; }
     }
 
-    container.addEventListener('dragover', (e) => { e.preventDefault(); container.style.borderColor = '#007bff'; });
-    container.addEventListener('dragleave', (e) => { e.preventDefault(); container.style.borderColor = '#ccc'; });
-    container.addEventListener('drop', async (e) => {
-      e.preventDefault(); container.style.borderColor = '#ccc';
-      const f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (f) await runFlow(f);
-    });
-
-    container.addEventListener('click', async (e) => {
-      if (e.target.tagName !== 'BUTTON') {
-        const f = await pickFile();
-        if (f) await runFlow(f);
+    async function runFlow(file){
+      if (!file || !file.type || !file.type.startsWith('image/')) {
+        alert('이미지 파일을 선택하세요.');
+        return;
       }
-    });
-
-    // --- 실행 흐름 ---
-    async function runFlow(file, { dry = false } = {}) {
       resultEl.textContent = '준비 확인 중...';
       showLoading(true);
-
-      try {
-        if (!file || !file.type.startsWith('image/')) {
-          throw new Error('이미지 파일만 업로드할 수 있습니다.');
-        }
-
-        if (!dry) {
-          const isReady = await ensureReady();
-          if (!isReady) {
-            throw new Error('서버가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+      try{
+        // 상태 확인 및 대기
+        const st = await getStatus();
+        if (st !== 'ready') {
+          resultEl.textContent = '모델 로딩 중… 잠시만 기다려주세요.';
+          const ok = await ensureReady({maxWaitMs: 120000});
+          if (!ok) {
+            resultEl.textContent = '서버가 아직 준비되지 않았습니다(워밍업 지연). 잠시 후 다시 시도해주세요.';
+            return;
           }
         }
 
+        // 미리보기
         showPreview(file);
-        const small = await shrinkImageIfNeeded(file);
 
-        resultEl.textContent = dry ? '드라이런 중...' : '인식 중…';
-        
-        const fd = new FormData();
-        fd.append('image_file', small);
-        const url = `/ocr/license-plate?dry_run=${dry}`;
-        
-        const res = await fetchWithTimeout(url, { method: 'POST', body: fd, timeout: 120000 });
-        const data = await res.json().catch(() => ({ message: res.statusText }));
-        
-        if (!res.ok) {
-          throw new Error(`요청 실패 (status ${res.status}): ${data.detail || data.message || JSON.stringify(data)}`);
-        }
+        // 실제 OCR
+        resultEl.textContent = '인식 중…';
+        const data = await postOCR(file);
 
-        if (dry) {
-          resultEl.textContent = `드라이런 성공. 파일 크기: ${data.file_size} bytes`;
+        // 요청: 받은 JSON을 "그대로" 출력
+        if (typeof data === 'string') {
+          resultEl.textContent = data; // 문자열이면 그대로
         } else {
-          // 백엔드 응답 구조에 맞게 결과 표시
           resultEl.textContent = JSON.stringify(data, null, 2);
         }
-        
       } catch (err) {
         console.error(err);
-        resultEl.textContent = '오류 발생: ' + (err.message || err);
+        resultEl.textContent = '오류 발생: ' + (err?.message || err);
       } finally {
         showLoading(false);
       }
     }
-    
-    // 초기 상태 체크
-    document.addEventListener('DOMContentLoaded', getStatus);
+
+    // 이벤트 바인딩
+    btnPick.addEventListener('click', ()=>fileInput.click());
+    btnWarm.addEventListener('click', async ()=>{
+      try{
+        showLoading(true);
+        await fetch('/_warm', {method:'POST'});
+        await sleep(1000);
+        await getStatus();
+      }finally{ showLoading(false); }
+    });
+    fileInput.addEventListener('change', ()=>{
+      const f = fileInput.files && fileInput.files[0];
+      if (f) runFlow(f);
+      // 동일 파일 다시 선택 가능하도록
+      fileInput.value = '';
+    });
+
+    // 드래그 앤 드롭
+    box.addEventListener('dragover', (e)=>{ e.preventDefault(); box.classList.add('dragover'); });
+    box.addEventListener('dragleave', (e)=>{ e.preventDefault(); box.classList.remove('dragover'); });
+    box.addEventListener('drop', (e)=>{
+      e.preventDefault(); box.classList.remove('dragover');
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) runFlow(f);
+    });
+    // 클릭으로도 선택
+    box.addEventListener('click', ()=>fileInput.click());
+
+    // 페이지 로드시 한 번 상태 체크
+    document.addEventListener('DOMContentLoaded', ()=>{ getStatus(); });
   </script>
 </body>
 </html>
