@@ -20,3 +20,5 @@ docker build --no-cache -t lp-ocr .
 # 3) 컨테이너 재실행
 docker run -d --name lp-ocr --restart=always -p 80:8000 lp-ocr
 
+#도커 모두 삭제
+docker system prune -a --volumes

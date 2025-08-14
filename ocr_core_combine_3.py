@@ -155,7 +155,9 @@ def extract_text_from_image_fast(roi):
                 
     return None, 0.0, False
 
-def recognize_plate_fast(image_path, debug=False):
+# def recognize_plate_fast(image_path, debug=False):
+def recognize_plate_fast(image_path, debug=False, reader=None):
+    
     """
     1단계: 빠르고 단순한 OCR 워크플로우를 실행합니다.
     """
