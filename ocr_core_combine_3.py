@@ -347,8 +347,9 @@ def extract_korean_license_plate_gemini(image_path: str) -> dict:
             "error": f"예상치 못한 오류 발생: {e}"
         }
 
-
-def recognize_plate_combined(image_path, debug=False, save_dir=None):
+# 수정된 코드
+def recognize_plate_combined(image_path, debug=False, save_dir=None, reader=None):
+# def recognize_plate_combined(image_path, debug=False, save_dir=None):
     """
     번호판 인식을 위한 통합 워크플로우.
     1) 빠른 방식 먼저 시도
@@ -361,6 +362,7 @@ def recognize_plate_combined(image_path, debug=False, save_dir=None):
 
     # --- 1단계: 빠른 인식 ---
     print("--- 1단계: 빠른 번호판 인식 시도 ---", flush=True)
+    
     try:
         result_fast = recognize_plate_fast(image_path, debug=debug)
         if result_fast.get("success"):
