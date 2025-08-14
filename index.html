@@ -6,8 +6,8 @@
   <title>차량 번호판 OCR</title>
   <style>
     :root{
-      --box-w: 50vw;          /* 기본 가로 폭: 화면의 50% */
-      --ratio: 0.75;          /* 4:3 비율 = 0.75 */
+      --box-w: 40vw;          /* 기본 가로 폭: 화면의 50% */
+      --ratio: 0.6;          /* 5:3 비율 = 0.6 */
       --max-w: 900px;         /* 너무 커지지 않도록 상한 */
       --min-w: 280px;         /* 너무 작지 않도록 하한 */
     }
@@ -68,7 +68,6 @@
 <body>
   <h2>차량 번호판 OCR</h2>
   <div id="status">상태: <span id="status-badge" class="badge warn">확인 중…</span></div>
-  <div id="hint">※ 배포 직후엔 모델 로딩 때문에 잠시(30~90초) 걸릴 수 있어요.</div>
 
   <div id="actions">
     <button id="pick">이미지 선택</button>
