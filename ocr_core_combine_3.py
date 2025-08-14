@@ -155,7 +155,6 @@ def extract_text_from_image_fast(roi):
                 
     return None, 0.0, False
 
-# def recognize_plate_fast(image_path, debug=False):
 def recognize_plate_fast(image_path, debug=False, reader=None):
     
     """
@@ -366,7 +365,6 @@ def recognize_plate_combined(image_path, debug=False, save_dir=None, reader=None
     print("--- 1단계: 빠른 번호판 인식 시도 ---", flush=True)
     
     try:
-        # result_fast = recognize_plate_fast(image_path, debug=debug)
         # 수정된 코드
         result_fast = recognize_plate_fast(image_path, debug=debug, reader=reader)
         if result_fast.get("success"):
