@@ -427,27 +427,32 @@ def recognize_plate_combined(image_path, debug=False, reader=None, save_dir=None
     t0 = time.time()
     
     final_result = None
-
+    
     # --- 1단계: 빠른 인식 ---
     print("--- 1단계: 빠른 번호판 인식 시도 ---", flush=True)
-    
+    final_result = None
     try:
-        # 수정된 코드
         result_fast = recognize_plate_fast(image_path, debug=debug)
-        if result_fast.get("success"):
-            print("✅ 1단계에서 성공적으로 번호판을 인식했습니다.", flush=True)
+        # 1단계 성공 여부 및 confidence를 확인
+        if result_fast.get("success") and result_fast.get("confidence") >= 0.6:
+            print("✅ 1단계에서 성공적으로 번호판을 인식했습니다 (confidence >= 0.6).", flush=True)
             final_result = {
                 "success": True,
-                "plate_number": result_fast.get("result"), # 'result' -> 'plate_number'로 변경
+                "plate_number": result_fast.get("result"),
                 "confidence": result_fast.get("confidence"),
                 "stage": "1단계 로직",
                 "elapsed_sec": round(time.time() - t0, 2),
             }
         else:
-            print(f"❌ 1단계 실패: {result_fast.get('error', '알 수 없는 오류')}", flush=True)
+            # success가 False이거나 confidence가 0.6 미만일 경우
+            confidence_info = result_fast.get('confidence') if result_fast.get('success') else 'N/A'
+            error_message = result_fast.get('error', '알 수 없는 오류')
+            if result_fast.get('success') and confidence_info < 0.6:
+                print(f"❌ 1단계 실패: Confidence가 0.6 미만 ({confidence_info})", flush=True)
+            else:
+                print(f"❌ 1단계 실패: {error_message}", flush=True)
     except Exception as e:
         print(f"❌ 1단계 예외: {e}", flush=True)
-    
     
     
     # 1단계에서 성공하지 못했을 경우에만 2단계 Gemini 실행
