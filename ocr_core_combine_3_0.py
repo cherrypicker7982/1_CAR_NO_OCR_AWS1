@@ -14,7 +14,7 @@ import requests
 
 # OCR 엔진 초기화 (한글 + 영문)
 # EasyOCR을 한 번만 초기화하여 자원 낭비를 방지합니다.
-# reader = easyocr.Reader(['ko', 'en'], gpu=False)
+reader = easyocr.Reader(['ko', 'en'], gpu=False)
 
 # 1) 한국 번호판에 쓰이는 한글만 모아둔 문자열 (오인식 제외 목적)
 allowed_letters = (
@@ -123,12 +123,10 @@ def find_plate_roi(image, thresh, debug=False, save_base=None):
     return candidate_regions
 
 def extract_text_from_image_fast(roi):
-# def extract_text_from_image_fast(roi, reader):
     """
     1단계: OCR 엔진으로 텍스트를 추출하고 유효성 검사를 수행합니다.
     - EasyOCR이 분리된 텍스트('28노', '7587')를 반환할 경우 합치는 로직을 포함합니다.
     """
-    reader = _get_reader() # 수정된 코드: 여기서 reader 객체를 직접 가져옵니다.
     result = reader.readtext(roi)
     ocr_results = []
     
@@ -157,7 +155,7 @@ def extract_text_from_image_fast(roi):
                 
     return None, 0.0, False
 
-def recognize_plate_fast(image_path, debug=False):
+def recognize_plate_fast(image_path, debug=False, reader=None):
     
     """
     1단계: 빠르고 단순한 OCR 워크플로우를 실행합니다.
@@ -351,7 +349,7 @@ def extract_korean_license_plate_gemini(image_path: str) -> dict:
         }
 
 # 수정된 코드
-def recognize_plate_combined(image_path, debug=False, save_dir=None):
+def recognize_plate_combined(image_path, debug=False, save_dir=None, reader=None):
 # def recognize_plate_combined(image_path, debug=False, save_dir=None):
     """
     번호판 인식을 위한 통합 워크플로우.
@@ -368,7 +366,7 @@ def recognize_plate_combined(image_path, debug=False, save_dir=None):
     
     try:
         # 수정된 코드
-        result_fast = recognize_plate_fast(image_path, debug=debug)
+        result_fast = recognize_plate_fast(image_path, debug=debug, reader=reader)
         if result_fast.get("success"):
             print("✅ 1단계에서 성공적으로 번호판을 인식했습니다.", flush=True)
             final_result = {
@@ -427,7 +425,7 @@ if __name__ == "__main__":
     
     image_dir = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test_samples"
     # test_images = ['car1.jpg', 'car2.jpg', 'car3.jpg', 'car4.jpg', 'car5.jpg', 'car6.jpg', 'car7.jpg', 'car8.jpg', 'car9.jpg']
-    test_images = ['ca2.jpg']
+    test_images = ['car5.jpg']
     debug_mode = True  #디버그 모드 설정 (사진저장)
     save_dir_base = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test_samples"
 
