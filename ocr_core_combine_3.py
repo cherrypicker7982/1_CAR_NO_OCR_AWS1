@@ -27,17 +27,20 @@ allowed_letters = (
     "하허호"       # 렌터카용
 )
 
+
+LICENSE_PLATE_RE = re.compile(rf'(?P<p1>\d{{2,3}})(?P<kr>[{allowed_letters}])\s?(?P<p2>\d{{4}})')
+
 # 1줄 번호판 정규식 패턴 (띄어쓰기 허용)
-license_plate_pattern_one_line = re.compile(r'^\d{2,3}[가-힣]\s?\d{4}$')
-# 2줄 번호판 정규식 패턴
-license_plate_pattern_two_line = re.compile(r'^[가-힣]{2}\d{2}[가-힣]\d{4}$')
+# license_plate_pattern_one_line = re.compile(r'^\d{2,3}[가-힣]\s?\d{4}$')
+# # 2줄 번호판 정규식 패턴
+# license_plate_pattern_two_line = re.compile(r'^[가-힣]{2}\d{2}[가-힣]\d{4}$')
+# # 최종 결과 검증을 위한 단순화된 패턴: 뒤에서 5번째 한 글자는 allowed_letters, 뒤 4자리는 숫자
+# final_simplified_pattern = re.compile(rf'[{allowed_letters}]\d{{4}}$')
+# # 허용 문자 패턴 (번호판에 나올 수 있는 숫자+한글)
+# korean_chars = '가나다라마바사아자거너버서어저고노도로모보소오조구누두루무부수우주하허호배육해공국합'
+# allow_re = re.compile(f"[0-9{''.join(korean_chars)}]+")
 
-# 최종 결과 검증을 위한 단순화된 패턴: 뒤에서 5번째 한 글자는 allowed_letters, 뒤 4자리는 숫자
-final_simplified_pattern = re.compile(rf'[{allowed_letters}]\d{{4}}$')
 
-# 허용 문자 패턴 (번호판에 나올 수 있는 숫자+한글)
-korean_chars = '가나다라마바사아자거너버서어저고노도로모보소오조구누두루무부수우주하허호배육해공국합'
-allow_re = re.compile(f"[0-9{''.join(korean_chars)}]+")
 
 # ocr_core_combine_1.py
 import logging
@@ -48,9 +51,9 @@ _reader = None
 def _get_reader():
     global _reader
     if _reader is None:
-        log.info("easyocr.Reader init (cpu, ['en','ko']) ...")
+        log.info("easyocr.Reader init (cpu, ['ko','en']) ...")
         import easyocr
-        _reader = easyocr.Reader(['en','ko'], gpu=False, verbose=False)
+        _reader = easyocr.Reader(['ko','en'], gpu=False, verbose=False)
         log.info("easyocr.Reader ready")
     return _reader
 # ==============================================================================
@@ -122,40 +125,320 @@ def find_plate_roi(image, thresh, debug=False, save_base=None):
 
     return candidate_regions
 
-def extract_text_from_image_fast(roi):
-# def extract_text_from_image_fast(roi, reader):
-    """
-    1단계: OCR 엔진으로 텍스트를 추출하고 유효성 검사를 수행합니다.
-    - EasyOCR이 분리된 텍스트('28노', '7587')를 반환할 경우 합치는 로직을 포함합니다.
-    """
-    reader = _get_reader() # 수정된 코드: 여기서 reader 객체를 직접 가져옵니다.
-    result = reader.readtext(roi)
-    ocr_results = []
+# def extract_text_from_image_fast(roi):
+# # def extract_text_from_image_fast(roi, reader):
+#     """
+#     1단계: OCR 엔진으로 텍스트를 추출하고 유효성 검사를 수행합니다.
+#     - EasyOCR이 분리된 텍스트('28노', '7587')를 반환할 경우 합치는 로직을 포함합니다.
+#     """
+#     reader = _get_reader() # 수정된 코드: 여기서 reader 객체를 직접 가져옵니다.
+#     result = reader.readtext(roi)
+#     ocr_results = []
     
-    for bbox, text, confidence in result:
-        text = text.replace(" ", "")
-        text = re.sub(r'[^0-9가-힣]', '', text)
-        if text:
-            ocr_results.append({'text': text, 'confidence': confidence, 'bbox': bbox})
+#     for bbox, text, confidence in result:
+#         text = text.replace(" ", "")
+#         text = re.sub(r'[^0-9가-힣]', '', text)
+#         if text:
+#             ocr_results.append({'text': text, 'confidence': confidence, 'bbox': bbox})
+            
+#     print('ocr_results', ocr_results)
     
-    if len(ocr_results) == 1:
-        text_combo = ocr_results[0]['text']
-        if license_plate_pattern_one_line.match(text_combo) or license_plate_pattern_two_line.match(text_combo):
-            if final_simplified_pattern.search(text_combo):
-                return text_combo, round(float(ocr_results[0]['confidence']), 3), True
-            else:
-                return text_combo, round(float(ocr_results[0]['confidence']), 3), False
+#     if len(ocr_results) == 1:
+#         text_combo = ocr_results[0]['text']
+#         if license_plate_pattern_one_line.match(text_combo) or license_plate_pattern_two_line.match(text_combo):
+#             if final_simplified_pattern.search(text_combo):
+#                 return text_combo, round(float(ocr_results[0]['confidence']), 3), True
+#             else:
+#                 return text_combo, round(float(ocr_results[0]['confidence']), 3), False
 
-    elif len(ocr_results) > 1:
-        combined_text = "".join([res['text'] for res in ocr_results])
-        combined_confidence = sum([res['confidence'] for res in ocr_results]) / len(ocr_results)
-        if license_plate_pattern_one_line.match(combined_text) or license_plate_pattern_two_line.match(combined_text):
-            if final_simplified_pattern.search(combined_text):
-                return combined_text, round(float(combined_confidence), 3), True
-            else:
-                return combined_text, round(float(combined_confidence), 3), False
+#     elif len(ocr_results) > 1:
+#         combined_text = "".join([res['text'] for res in ocr_results])
+#         combined_confidence = sum([res['confidence'] for res in ocr_results]) / len(ocr_results)
+#         if license_plate_pattern_one_line.match(combined_text) or license_plate_pattern_two_line.match(combined_text):
+#             if final_simplified_pattern.search(combined_text):
+#                 return combined_text, round(float(combined_confidence), 3), True
+#             else:
+#                 return combined_text, round(float(combined_confidence), 3), False
                 
+#     return None, 0.0, False
+
+
+# def extract_text_from_image_fast(roi):
+#     """
+#     1단계: OCR 엔진으로 텍스트를 추출하고 유효성 검사를 수행합니다.
+#     - EasyOCR이 분리된 텍스트('28노', '7587')를 반환할 경우 합치는 로직을 포함합니다.
+#     """
+#     reader = _get_reader()
+#     result = reader.readtext(roi)
+#     ocr_results = []
+    
+#     for bbox, text, confidence in result:
+#         text = text.replace(" ", "")
+#         text = re.sub(r'[^0-9가-힣]', '', text)
+#         if text:
+#             # bbox는 [x1, y1], [x2, y2], [x3, y3], [x4, y4] 형태로 되어 있습니다.
+#             # y 좌표의 평균을 사용하여 텍스트의 수직 위치를 판단합니다.
+#             y_avg = (bbox[0][1] + bbox[1][1] + bbox[2][1] + bbox[3][1]) / 4
+#             ocr_results.append({'text': text, 'confidence': confidence, 'bbox': bbox, 'y_avg': y_avg})
+            
+#     print('ocr_results', ocr_results)
+    
+#     # OCR 결과가 2개 이상일 경우 Y좌표를 기준으로 정렬
+#     if len(ocr_results) > 1:
+#         ocr_results.sort(key=lambda x: x['y_avg'])
+    
+#     # 텍스트 병합 및 유효성 검사
+#     combined_text = "".join([res['text'] for res in ocr_results])
+    
+#     if len(ocr_results) >= 1:
+#         # OCR 결과가 한 개 이상이면 병합된 텍스트로 유효성 검사를 시도합니다.
+#         if license_plate_pattern_one_line.match(combined_text) or license_plate_pattern_two_line.match(combined_text):
+#             combined_confidence = sum([res['confidence'] for res in ocr_results]) / len(ocr_results)
+#             if final_simplified_pattern.search(combined_text):
+#                 return combined_text, round(float(combined_confidence), 3), True
+#             else:
+#                 return combined_text, round(float(combined_confidence), 3), False
+
+#     return None, 0.0, False
+
+
+
+        
+# def extract_text_from_image_fast(roi):
+#     """
+#     1단계: OCR 엔진으로 텍스트를 추출하고 유효성 검사를 수행합니다.
+#     - EasyOCR이 분리된 텍스트('28노', '7587')를 반환할 경우 합치는 로직을 포함합니다.
+#     """
+#     reader = _get_reader()
+#     result = reader.readtext(roi)
+#     ocr_results = []
+    
+#     # 텍스트를 정규식으로 미리 필터링하여 유효한 번호판 후보만 남깁니다.
+#     for bbox, text, confidence in result:
+#         text = text.replace(" ", "")
+#         text = re.sub(r'[^0-9가-힣]', '', text)
+        
+#         # 유효한 번호판 패턴을 가진 텍스트만 ocr_results에 추가
+#         if license_plate_pattern_one_line.match(text) or license_plate_pattern_two_line.match(text):
+#             y_avg = (bbox[0][1] + bbox[1][1] + bbox[2][1] + bbox[3][1]) / 4
+#             ocr_results.append({'text': text, 'confidence': confidence, 'bbox': bbox, 'y_avg': y_avg})
+#         else:
+#             # 유효하지 않은 텍스트는 무시합니다.
+#             print(f"❌ 불필요한 텍스트 필터링: {text} (신뢰도: {confidence})", flush=True)
+
+#     print('ocr_results', ocr_results)
+    
+#     # OCR 결과가 2개 이상일 경우 Y좌표를 기준으로 정렬
+#     if len(ocr_results) > 1:
+#         ocr_results.sort(key=lambda x: x['y_avg'])
+    
+#     # 텍스트 병합 및 유효성 검사
+#     combined_text = "".join([res['text'] for res in ocr_results])
+    
+#     if len(ocr_results) >= 1:
+#         if license_plate_pattern_one_line.match(combined_text) or license_plate_pattern_two_line.match(combined_text):
+#             combined_confidence = sum([res['confidence'] for res in ocr_results]) / len(ocr_results)
+#             if final_simplified_pattern.search(combined_text):
+#                 return combined_text, round(float(combined_confidence), 3), True
+#             else:
+#                 return combined_text, round(float(combined_confidence), 3), False
+
+#     return None, 0.0, False
+        
+        
+# def extract_text_from_image_fast(roi):
+#     """
+#     1단계: OCR 엔진으로 텍스트를 추출하고 유효성 검사를 수행합니다.
+#     """
+#     reader = _get_reader()
+#     result = reader.readtext(roi)
+#     ocr_results = []
+    
+#     # 모든 OCR 결과를 일단 ocr_results에 추가합니다.
+#     for bbox, text, confidence in result:
+#         text = text.replace(" ", "")
+#         text = re.sub(r'[^0-9가-힣]', '', text)
+#         if text:
+#             # y 좌표의 평균을 사용하여 텍스트의 수직 위치를 판단합니다.
+#             y_avg = (bbox[0][1] + bbox[1][1] + bbox[2][1] + bbox[3][1]) / 4
+#             ocr_results.append({'text': text, 'confidence': confidence, 'bbox': bbox, 'y_avg': y_avg})
+            
+#     print('ocr_results', ocr_results)
+    
+#     # OCR 결과가 2개 이상일 경우 Y좌표를 기준으로 정렬
+#     if len(ocr_results) > 1:
+#         ocr_results.sort(key=lambda x: x['y_avg'])
+    
+#     # 텍스트 병합 및 유효성 검사
+#     combined_text = "".join([res['text'] for res in ocr_results])
+    
+#     if len(ocr_results) >= 1:
+#         if license_plate_pattern_one_line.match(combined_text) or license_plate_pattern_two_line.match(combined_text):
+#             combined_confidence = sum([res['confidence'] for res in ocr_results]) / len(ocr_results)
+#             if final_simplified_pattern.search(combined_text):
+#                 return combined_text, round(float(combined_confidence), 3), True
+#             else:
+#                 return combined_text, round(float(combined_confidence), 3), False
+
+#     return None, 0.0, False
+
+# def extract_text_from_image_fast(roi):
+#     """
+#     1단계: OCR 엔진으로 텍스트를 추출하고 유효성 검사를 수행합니다.
+#     - EasyOCR이 분리된 텍스트('28노', '7587')를 반환할 경우 합치는 로직을 포함합니다.
+#     """
+#     reader = _get_reader()
+#     result = reader.readtext(roi)
+#     ocr_results = []
+    
+#     for bbox, text, confidence in result:
+#         text = text.replace(" ", "")
+#         text = re.sub(r'[^0-9가-힣]', '', text)
+#         if text:
+#             # 바운딩 박스의 중심 Y 좌표를 계산합니다.
+#             y_center = (bbox[0][1] + bbox[2][1]) / 2
+#             ocr_results.append({'text': text, 'confidence': confidence, 'bbox': bbox, 'y_center': y_center})
+            
+#     print('ocr_results', ocr_results)
+    
+#     # OCR 결과가 2개 이상일 경우 y_center를 기준으로 정렬
+#     if len(ocr_results) > 1:
+#         ocr_results.sort(key=lambda x: x['y_center'])
+    
+#     # 텍스트 병합 및 유효성 검사
+#     combined_text = "".join([res['text'] for res in ocr_results])
+    
+#     if len(ocr_results) >= 1:
+#         if license_plate_pattern_one_line.match(combined_text) or license_plate_pattern_two_line.match(combined_text):
+#             combined_confidence = sum([res['confidence'] for res in ocr_results]) / len(ocr_results)
+#             if final_simplified_pattern.search(combined_text):
+#                 return combined_text, round(float(combined_confidence), 3), True
+#             else:
+#                 return combined_text, round(float(combined_confidence), 3), False
+
+#     return None, 0.0, False
+def extract_text_from_image_fast(roi):
+    """
+    EasyOCR 결과를 한 줄/두 줄에 맞게 정렬·병합하고 한국 번호판 패턴으로 검증.
+    """
+    reader = _get_reader()
+    result = reader.readtext(roi)  # [(bbox, text, conf), ...]
+    ocr_results = []
+
+    # 1) 정리
+    for bbox, text, conf in result:
+        if not text:
+            continue
+        t = text.replace(" ", "")
+        t = re.sub(r'[^0-9A-Za-z가-힣]', '', t)  # 일단 영문도 허용 후 후처리에서 치환
+        if not t:
+            continue
+        # 중심 좌표/크기
+        (x0,y0),(_, _),(x2,y2),(_,_) = bbox
+        x_center = (x0 + x2) / 2.0
+        y_center = (y0 + y2) / 2.0
+        height   = abs(y2 - y0) + 1e-6
+        ocr_results.append({"text": t, "confidence": float(conf),
+                            "bbox": bbox, "x_center": x_center,
+                            "y_center": y_center, "height": height})
+
+    print("ocr_results", ocr_results)
+
+    if not ocr_results:
+        return None, 0.0, False
+
+    # 2) 문자인식 흔한 보정
+    def normalize_token(s: str) -> str:
+        s = s.upper()
+        s = s.replace("O", "0").replace("I", "1").replace("L", "1").replace("S", "5").replace("B", "8")
+        s = re.sub(r'[^0-9가-힣]', '', s)  # 숫자/한글만 유지
+        return s
+
+    for r in ocr_results:
+        r["text"] = normalize_token(r["text"])
+
+    # 3) 한 줄 / 두 줄 판별
+    mean_h = sum(r["height"] for r in ocr_results) / len(ocr_results)
+    min_y  = min(r["y_center"] for r in ocr_results)
+    max_y  = max(r["y_center"] for r in ocr_results)
+    one_line = (max_y - min_y) <= (0.35 * mean_h)
+
+    combined_text = ""
+    if one_line:
+        # 한 줄 → 좌→우
+        ocr_results.sort(key=lambda r: r["x_center"])
+        combined_text = "".join(r["text"] for r in ocr_results)
+    else:
+        # 두 줄 → y로 위/아래 분리, 각 줄에서 좌→우
+        mid_y = (min_y + max_y) / 2.0
+        top_line = [r for r in ocr_results if r["y_center"] <= mid_y]
+        bot_line = [r for r in ocr_results if r["y_center"]  > mid_y]
+
+        # 예외: 잘 안 나뉘면 y기준 정렬 후 반으로 나눔
+        if not top_line or not bot_line:
+            ocr_results.sort(key=lambda r: r["y_center"])
+            half = max(1, len(ocr_results)//2)
+            top_line, bot_line = ocr_results[:half], ocr_results[half:]
+
+        top_line.sort(key=lambda r: r["x_center"])
+        bot_line.sort(key=lambda r: r["x_center"])
+        combined_text = "".join(r["text"] for r in top_line) + "".join(r["text"] for r in bot_line)
+
+    # 4) ←←← 중요: 검증/반환은 if/else '밖'에서 수행 (전문 or 부분 매치)
+    if combined_text:
+        print("combined_text:", repr(combined_text))  # 디버그
+        m = LICENSE_PLATE_RE.search(combined_text)    # 부분 매치 허용(예: '356어873951' → '356어8739')
+        print("regex_match:", bool(m))                # 디버그
+        if m:
+            plate = f"{m.group('p1')}{m.group('kr')}{m.group('p2')}"  # 공백 제거 정규화
+            avg_conf = sum(r["confidence"] for r in ocr_results) / len(ocr_results)
+            return plate, round(avg_conf, 3), True
+
+    # 항상 3-튜플 반환
     return None, 0.0, False
+
+
+
+# def extract_text_from_image_fast(roi):
+#     """
+#     1단계: OCR 엔진으로 텍스트를 추출하고 유효성 검사를 수행합니다.
+#     - EasyOCR이 분리된 텍스트('28노', '7587')를 반환할 경우 합치는 로직을 포함합니다.
+#     """
+#     reader = _get_reader()
+#     result = reader.readtext(roi)
+#     ocr_results = []
+    
+#     # 모든 OCR 결과를 일단 ocr_results에 추가합니다.
+#     for bbox, text, confidence in result:
+#         text = text.replace(" ", "")
+#         text = re.sub(r'[^0-9가-힣]', '', text)
+#         if text:
+#             # y 좌표의 평균 대신, 바운딩 박스의 y 좌표 중 가장 작은 값(최상단)을 찾습니다.
+#             y_top = min(p[1] for p in bbox)
+#             ocr_results.append({'text': text, 'confidence': confidence, 'bbox': bbox, 'y_top': y_top})
+            
+#     print('ocr_results', ocr_results)
+    
+#     # OCR 결과가 2개 이상일 경우 y_top을 기준으로 정렬
+#     if len(ocr_results) > 1:
+#         ocr_results.sort(key=lambda x: x['y_top']) # y_top으로 정렬하도록 수정
+    
+#     # 텍스트 병합 및 유효성 검사
+#     combined_text = "".join([res['text'] for res in ocr_results])
+    
+#     if len(ocr_results) >= 1:
+#         if license_plate_pattern_one_line.match(combined_text) or license_plate_pattern_two_line.match(combined_text):
+#             combined_confidence = sum([res['confidence'] for res in ocr_results]) / len(ocr_results)
+#             if final_simplified_pattern.search(combined_text):
+#                 return combined_text, round(float(combined_confidence), 3), True
+#             else:
+#                 return combined_text, round(float(combined_confidence), 3), False
+
+#     return None, 0.0, False
+
+
+
+
 
 def recognize_plate_fast(image_path, debug=False):
     
@@ -168,18 +451,24 @@ def recognize_plate_fast(image_path, debug=False):
         save_base = os.path.join(os.path.dirname(image_path), os.path.splitext(os.path.basename(image_path))[0])
         original_img, thresh = preprocess_image_fast(image_path)
         candidate_rois = find_plate_roi(original_img, thresh, debug=debug, save_base=save_base)
+        print('len(candidate_rois)', len(candidate_rois))
         
         if not candidate_rois:
             raise ValueError("번호판 후보 영역을 찾을 수 없습니다.")
 
         for i_roi, roi in enumerate(candidate_rois):
-            plate_text, conf, is_valid = extract_text_from_image_fast(roi)
+            ret = extract_text_from_image_fast(roi)
+            if not ret:
+                print(i_roi, "번째  결과 없음(None) → 다음 ROI")
+                continue
+
+            plate_text, conf, is_valid = ret
+            print(i_roi, "번째  text:", plate_text)
+
             if plate_text and is_valid:
-                # duration = round(time.time() - start_time, 2)
                 return {
                     "result": plate_text,
                     "confidence": conf,
-                    # "time": duration,
                     "category": "car_number",
                     "success": True,
                     "source": "fast_ocr"
@@ -197,6 +486,13 @@ def recognize_plate_fast(image_path, debug=False):
             "error": str(e),
             "success": False
         }
+        
+        
+        
+        
+        
+        
+        
         
         
 
@@ -383,26 +679,29 @@ def recognize_plate_combined(image_path, debug=False, save_dir=None):
     except Exception as e:
         print(f"❌ 1단계 예외: {e}", flush=True)
     
-    # 1단계에서 성공하지 못했을 경우에만 2단계 실행
-    if not final_result:
-        # --- 2단계: Gemini를 활용한 정밀 인식 시도 ---
-        print("--- 2단계: 정밀 번호판 인식 시도 (Gemini) ---", flush=True)
-        try:
-            gemini_result = extract_korean_license_plate_gemini(image_path)
+    
+    
+    
+    # # 1단계에서 성공하지 못했을 경우에만 2단계 실행
+    # if not final_result:
+    #     # --- 2단계: Gemini를 활용한 정밀 인식 시도 ---
+    #     print("--- 2단계: 정밀 번호판 인식 시도 (Gemini) ---", flush=True)
+    #     try:
+    #         gemini_result = extract_korean_license_plate_gemini(image_path)
             
-            if gemini_result.get("success"):
-                print("✅ 2단계 Gemini에서 성공적으로 번호판을 인식했습니다.", flush=True)
-                final_result = {
-                    "success": True,
-                    "plate_number": gemini_result.get("license_plate_number"), # 'license_plate_number' -> 'plate_number'로 변경
-                    "confidence": "gemini",
-                    "stage": "2단계 gemini",
-                    "elapsed_sec": round(time.time() - t0, 2),
-                }
-            else:
-                print(f"❌ 2단계 실패: {gemini_result.get('error', '알 수 없는 오류')}", flush=True)
-        except Exception as e:
-            print(f"❌ 2단계 예외: {e}", flush=True)
+    #         if gemini_result.get("success"):
+    #             print("✅ 2단계 Gemini에서 성공적으로 번호판을 인식했습니다.", flush=True)
+    #             final_result = {
+    #                 "success": True,
+    #                 "plate_number": gemini_result.get("license_plate_number"), # 'license_plate_number' -> 'plate_number'로 변경
+    #                 "confidence": "gemini",
+    #                 "stage": "2단계 gemini",
+    #                 "elapsed_sec": round(time.time() - t0, 2),
+    #             }
+    #         else:
+    #             print(f"❌ 2단계 실패: {gemini_result.get('error', '알 수 없는 오류')}", flush=True)
+    #     except Exception as e:
+    #         print(f"❌ 2단계 예외: {e}", flush=True)
     
     # 두 단계 모두 실패한 경우
     if not final_result:
@@ -427,7 +726,7 @@ if __name__ == "__main__":
     
     image_dir = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test_samples"
     # test_images = ['car1.jpg', 'car2.jpg', 'car3.jpg', 'car4.jpg', 'car5.jpg', 'car6.jpg', 'car7.jpg', 'car8.jpg', 'car9.jpg']
-    test_images = ['ca2.jpg']
+    test_images = ['car9.jpg']
     debug_mode = True  #디버그 모드 설정 (사진저장)
     save_dir_base = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test_samples"
 
