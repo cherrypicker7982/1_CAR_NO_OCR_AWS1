@@ -110,29 +110,17 @@ def _get_file_suffix(filename: str, content_type: str) -> str:
         return "." + filename.split(".")[-1].lower()
     return mimetypes.guess_extension(content_type) or ".bin"
 
-# def _run_ocr_blocking(temp_path: str):
-#     """Blocking OCR logic to be run in a separate thread."""
-#     global reader # 전역 reader 객체를 사용하도록 선언
-#     try:
-#         from ocr_core_combine_3 import recognize_plate_combined
-#         # recognize_plate_combined 함수에 reader 객체를 전달하도록 수정
-#         return recognize_plate_combined(temp_path, debug=False, reader=reader)
-#     finally:
-#         # 이 부분은 변경 없음
-#         os.remove(temp_path)
-#         log.info(f"Temporary file removed: {temp_path}")
-        
-    
-def _run_ocr_blocking(temp_path: str, reader):
-# """Blocking OCR logic to be run in a separate thread."""
+def _run_ocr_blocking(temp_path: str):
+    """Blocking OCR logic to be run in a separate thread."""
+    global reader # 전역 reader 객체를 사용하도록 선언
     try:
         from ocr_core_combine_3 import recognize_plate_combined
+        # recognize_plate_combined 함수에 reader 객체를 전달하도록 수정
         return recognize_plate_combined(temp_path, debug=False, reader=reader)
     finally:
+        # 이 부분은 변경 없음
         os.remove(temp_path)
         log.info(f"Temporary file removed: {temp_path}")
-        
-        
 
 @app.post("/ocr/license-plate", summary="Recognize license plates from an image")
 async def recognize_license_plate(
@@ -186,8 +174,7 @@ async def recognize_license_plate(
     try:
         loop = asyncio.get_running_loop()
         result = await asyncio.wait_for(
-            # loop.run_in_executor(None, _run_ocr_blocking, temp_path),
-            loop.run_in_executor(None, _run_ocr_blocking, temp_path, reader),
+            loop.run_in_executor(None, _run_ocr_blocking, temp_path),
             timeout=TIMEOUT_SECONDS
         )
         return result

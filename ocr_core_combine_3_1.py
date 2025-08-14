@@ -415,8 +415,7 @@ def extract_korean_license_plate_gemini(image_path: str) -> dict:
         }
 
 # 수정된 코드
-# def recognize_plate_combined(image_path, debug=False, save_dir=None):
-def recognize_plate_combined(image_path, debug=False, reader=None, save_dir=None):
+def recognize_plate_combined(image_path, debug=False, save_dir=None):
 # def recognize_plate_combined(image_path, debug=False, save_dir=None):
     """
     번호판 인식을 위한 통합 워크플로우.
@@ -492,12 +491,9 @@ if __name__ == "__main__":
     # 테스트에 사용할 이미지 경로를 설정합니다.
     # 사용자의 환경에 맞게 경로를 수정하세요.
     
-    reader = easyocr.Reader(['ko', 'en'], gpu=False, verbose=False)
-    
-    
     image_dir = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test_samples"
     # test_images = ['car1.jpg', 'car2.jpg', 'car3.jpg', 'car4.jpg', 'car5.jpg', 'car6.jpg', 'car7.jpg', 'car8.jpg', 'car9.jpg']
-    test_images = ['car8.jpg']
+    test_images = ['car9.jpg']
     debug_mode = True  #디버그 모드 설정 (사진저장)
     save_dir_base = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test_samples"
 
@@ -512,8 +508,7 @@ if __name__ == "__main__":
             print(f"🕒 번호판 인식 통합 워크플로우 시작... ({test_path})")
             
             # 통합 함수 호출
-            result = recognize_plate_combined(test_path, debug=debug_mode, reader=reader, save_dir=save_dir_base)
-            # result = recognize_plate_combined(test_path, debug=debug_mode, save_dir=save_dir_base)
+            result = recognize_plate_combined(test_path, debug=debug_mode, save_dir=save_dir_base)
             print("\n--- 최종 결과 ---")
             print(json.dumps(result, ensure_ascii=False, indent=2))
             print("------------------")
