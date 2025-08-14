@@ -186,4 +186,5 @@ async def recognize_license_plate(
         raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="OCR processing timed out.")
     except Exception as e:
         log.error(f"An error occurred during OCR: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred during OCR processing.")
+        # 오류 메시지 자체를 반환하도록 수정
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred during OCR processing: {e}")
