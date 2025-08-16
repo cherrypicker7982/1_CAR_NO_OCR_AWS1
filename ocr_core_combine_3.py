@@ -434,7 +434,7 @@ def recognize_plate_combined(image_path, debug=False, reader=None, save_dir=None
     try:
         result_fast = recognize_plate_fast(image_path, debug=debug)
         # 1단계 성공 여부 및 confidence를 확인
-        if result_fast.get("success") and result_fast.get("confidence") >= 0.5:
+        if result_fast.get("success") and result_fast.get("confidence") >= 0.6:
             final_result = {
                 "success": True,
                 "plate_number": result_fast.get("result"),
@@ -456,26 +456,26 @@ def recognize_plate_combined(image_path, debug=False, reader=None, save_dir=None
         print(f"❌ 1단계 예외: {e}", flush=True)
     
     
-    # # 1단계에서 성공하지 못했을 경우에만 2단계 Gemini 실행
-    # if not final_result:
-    #     # --- 2단계: Gemini를 활용한 정밀 인식 시도 ---
-    #     print("--- 2단계: 정밀 번호판 인식 시도 (Gemini) ---", flush=True)
-    #     try:
-    #         gemini_result = extract_korean_license_plate_gemini(image_path)
+    # 1단계에서 성공하지 못했을 경우에만 2단계 Gemini 실행
+    if not final_result:
+        # --- 2단계: Gemini를 활용한 정밀 인식 시도 ---
+        print("--- 2단계: 정밀 번호판 인식 시도 (Gemini) ---", flush=True)
+        try:
+            gemini_result = extract_korean_license_plate_gemini(image_path)
             
-    #         if gemini_result.get("success"):
-    #             print("✅ 2단계 Gemini에서 성공적으로 번호판을 인식했습니다.", flush=True)
-    #             final_result = {
-    #                 "success": True,
-    #                 "plate_number": gemini_result.get("license_plate_number"), # 'license_plate_number' -> 'plate_number'로 변경
-    #                 "confidence": "gemini",
-    #                 "stage": "2단계 gemini",
-    #                 "elapsed_sec": round(time.time() - t0, 2),
-    #             }
-    #         else:
-    #             print(f"❌ 2단계 실패: {gemini_result.get('error', '알 수 없는 오류')}", flush=True)
-    #     except Exception as e:
-    #         print(f"❌ 2단계 예외: {e}", flush=True)
+            if gemini_result.get("success"):
+                print("✅ 2단계 Gemini에서 성공적으로 번호판을 인식했습니다.", flush=True)
+                final_result = {
+                    "success": True,
+                    "plate_number": gemini_result.get("license_plate_number"), # 'license_plate_number' -> 'plate_number'로 변경
+                    "confidence": "gemini",
+                    "stage": "2단계 gemini",
+                    "elapsed_sec": round(time.time() - t0, 2),
+                }
+            else:
+                print(f"❌ 2단계 실패: {gemini_result.get('error', '알 수 없는 오류')}", flush=True)
+        except Exception as e:
+            print(f"❌ 2단계 예외: {e}", flush=True)
     
     # 두 단계 모두 실패한 경우
     if not final_result:
