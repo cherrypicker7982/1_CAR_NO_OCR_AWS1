@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "phonic-skyline-470005-t3",
+  "private_key_id": "92381a8d7e7998a1592aaf84d2caafccaa997d59",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDVCJvIFmyDDFCr\n27ryqaAySHqgTkwJHtvdWW9RH8oNs4i6YIMHo0gLbB9EQoBQTjFp80z6ViSbXdyP\nQOJ2v7p+tAzm00FUySCdOGniOuS+l2cwMvkAwOkJWJvnMjeHma1gSozhRBsFugBK\nTptyfIW80Sh4wJntjjkup4k1/Qn/MNo18gqKbptAo5bb5PSiXQPHVUAZdPt4wsgK\ntatbvFQpSm36S780QCDmudH53fMhgHXLqA9i9QyERkLKZaUcDWXQQ0l+ASmZW24q\nksH5X6g8LybRGJJO2iWA/0mlnaf5aVCdEcQPcgD4b1wJjpO8yfWzkIbx0ZpJ9vMm\nRw+Bt8HfAgMBAAECggEAXI93+DDeBvaD2pgHG0ZeR1q8hQhf+xqAVyVzu2C/jsJx\n5uDmLZxhQi1BTIxEah//UlSXHrHtB+B5Y3jCrOvTIRgj/urNGQSmegk34EbMeo8Y\nE5YiIJSw7BGm84YbIHzCGvNpULshrpRJaf/LhKvcA9Uw635row7Hg6DheiaugESz\nQa8avQXOWcVUdzHB3wt/CXH9aTUA41UNIV6pYIO9SpCQHzC/fTOZqWD1veEghC68\n99J5IEJRxPxtINRppvdoJvUvNKGGxF3CH/Jx63JsrXXL6IqFuLannUyJlyGbjh9D\n2qvg8HGqvBRFok3eNdpfFY2kTbuq4cdw68JHl6itYQKBgQD464nwbV3EuTwnf0hY\nZcMmi0i29PRCJF3jPqhxdZlLa/Nsdj48HuvJhllrGc9tWVtMRkKb93TayT3p43K8\nnsjp0W5cXg3r1ks+F0LvAqZ+qTm1t4shKflGq8/wut+AXGCEa4KQSmEXyRfNMIZI\nKkK3E+efrXu/k9dIy+qZSObvTwKBgQDbF8URPSpXGoZeX9G+HTZipI1uebfzZTBJ\nfn5tBDetfm+NaGQC0YzrNHG1CehvmZBclxXXgwZEWMsaofqk/tOp2hXO37wLxIPT\nftuwItqRw6DSRfzm4SRLiQ/2ieNXdBXAv9xllRaQbz7NGckLJB8lYSS17v2EyWVl\nsSJYVq3gcQKBgFq4FTy/zzXcQLUwaWB2LgqFJsovOjpE4MbqVh+LuYPIYx47dfEZ\nX9vBkCM9c+CpeWGyFaKcLEV0pJDyaSWfRSAaSPt29+Hk5uVJOwa6041EBZlZvGYo\n0wXTpmRY5w30HOUF/b6yrPIrQvZwYfA5Hrl0kq0aYAhxTDvmvaiB7lB3AoGAWakM\nmNVzMlpEivKjny3NR+kXiBJ/2Teb3zfI/UwwjOulMzV5WD3xcX/w2KnJWYJ6tamO\n4rdYJThBRhDrxgITFPuO2S5uglJVsIPF2/snf2eTtPm3WbThaZgZ1EbxpqR3En5x\n75Bnv4wHI2BeChUqOd3bbCj1zxWsTUWETKqMVcECgYAZBMkFrXLuRIqU24pucGkm\nP/w72vwZD43FpT+VEYxFMgCIxz4C1RnbQEIaU2LT/gnxCgFdneu237MfgarTcQ+0\n2z8Uum0Ek6N3PdybnO/DOYeAWGeXAnELSgeDGjs/uBfu6vX1YDf0Hr4wK4ROaNRr\n39JMrEx/ctl1KowEQouahg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "vision-api-service-account@phonic-skyline-470005-t3.iam.gserviceaccount.com",
+  "client_id": "106041675066022901155",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vision-api-service-account%40phonic-skyline-470005-t3.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
