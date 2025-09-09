@@ -428,7 +428,6 @@ def recognize_plate_combined(image_path, debug=False, reader=None, save_dir=None
     
     final_result = None
     
-    '''
     # --- 1단계: 빠른 인식 ---
     print("--- 1단계: 빠른 번호판 인식 시도 ---", flush=True)
     final_result = None
@@ -455,14 +454,12 @@ def recognize_plate_combined(image_path, debug=False, reader=None, save_dir=None
                 print(f"❌ 1단계 실패: {error_message}", flush=True)
     except Exception as e:
         print(f"❌ 1단계 예외: {e}", flush=True)
-    '''
     
     
-    final_result =  ''  #임시로 값 할당함
     # 1단계에서 성공하지 못했을 경우에만 2단계 Gemini 실행
     if not final_result:
         # --- 2단계: Gemini를 활용한 정밀 인식 시도 ---
-        print("--- 2단계 Gemini 정밀 번호판 인식 시도 ---", flush=True)
+        print("--- 2단계: 정밀 번호판 인식 시도 (Gemini) ---", flush=True)
         try:
             gemini_result = extract_korean_license_plate_gemini(image_path)
             
@@ -506,7 +503,7 @@ if __name__ == "__main__":
     
     image_dir = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test_samples"
     # test_images = ['car1.jpg', 'car2.jpg', 'car3.jpg', 'car4.jpg', 'car5.jpg', 'car6.jpg', 'car7.jpg', 'car8.jpg', 'car9.jpg']
-    test_images = ['car9.jpg']
+    test_images = ['car19_re.jpg']
     debug_mode = True  #디버그 모드 설정 (사진저장)
     save_dir_base = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test_samples"
 
