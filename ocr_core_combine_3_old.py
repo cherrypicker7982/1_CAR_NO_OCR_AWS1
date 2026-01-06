@@ -352,10 +352,8 @@ def extract_korean_license_plate_gemini(image_path: str) -> dict:
         }
         
         # Gemini API 엔드포인트를 지정합니다.
-        model_version = "gemini-1.5-flash" 
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_version}:generateContent?key={api_key}"
-
-
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key={api_key}"
+        
         # API를 호출합니다.
         response = requests.post(api_url, json=payload)
         response.raise_for_status() # HTTP 오류 발생 시 예외 발생
