@@ -277,6 +277,8 @@ def extract_korean_license_plate_gemini(image_path: str) -> dict:
     """
     # Canvas 환경에서는 API 키를 자동으로 제공합니다.
     api_key = "AIzaSyDZ7PC6WA6xE86fH2OGX-XslImFEvBcKM8"  #gemini api key
+
+
     
 
     # 1. 한국 번호판에 쓰이는 한글 문자열 (오인식 방지 목적)
@@ -321,7 +323,7 @@ def extract_korean_license_plate_gemini(image_path: str) -> dict:
 
 
 
-        # Gemini API 호출을 위한 페이로드를 구성합니다.
+        # 4. Gemini API 호출을 위한 페이로드를 구성합니다.
         # 응답을 JSON 형식으로 받도록 요청합니다.
         prompt_text = (
             "이 이미지는 한국 자동차 번호판입니다. "
@@ -331,34 +333,33 @@ def extract_korean_license_plate_gemini(image_path: str) -> dict:
             "예시: {'license_plate': '12가3456'}. "
             "번호판을 찾을 수 없으면 'license_plate'의 값은 null로 설정해줘."
         )
-        
+
+        # 1. 페이로드 구성 (v1 정식 버전 규격)
         payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": prompt_text},
-                        {
-                            "inlineData": {
-                                "mimeType": "image/jpeg",
-                                "data": base64_image
-                            }
-                        }
-                    ]
-                }
-            ],
+            "contents": [{
+                "parts": [
+                    {"text": prompt_text},
+                    {"inlineData": {"mimeType": "image/jpeg", "data": base64_image}}
+                ]
+            }],
             "generationConfig": {
                 "responseMimeType": "application/json"
             }
         }
+
+        # 2. API URL (v1beta 버전)
+        # model_name = "gemini-1.5-flash"
+        model_name = "gemini-2.5-flash"
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+
+        response = requests.post(api_url, json=payload, headers={"Content-Type": "application/json"})
         
-        # Gemini API 엔드포인트를 지정합니다.
-        model_version = "gemini-1.5-flash" 
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_version}:generateContent?key={api_key}"
-
-
-        # API를 호출합니다.
-        response = requests.post(api_url, json=payload)
-        response.raise_for_status() # HTTP 오류 발생 시 예외 발생
+        # 상세한 에러 확인을 위해 아래 코드를 추가하는 것이 좋습니다.
+        if response.status_code != 200:
+            print(f"에러 발생 코드: {response.status_code}")
+            print(f"에러 내용: {response.text}")
+            
+        response.raise_for_status() 
         json_response = response.json()
         
         # JSON 응답에서 텍스트를 추출하고 파싱합니다.
@@ -508,7 +509,7 @@ if __name__ == "__main__":
     
     image_dir = r"C:\01_Coding\250801_CAR_OCR_PHOTO\1_CAR_NO_OCR\test\error"
     # test_images = ['car1.jpg', 'car2.jpg', 'car3.jpg', 'car4.jpg', 'car5.jpg', 'car6.jpg', 'car7.jpg', 'car8.jpg', 'car9.jpg']
-    test_images = ['error3.jpg']
+    test_images = ['img1.jpg', 'img2.jpg']
     # test_images = ['KakaoTalk_20250911_163213445_01.jpg']
     # test_images = ['KakaoTalk_20250910_104158897_04.jpg']
     debug_mode = True  #디버그 모드 설정 (사진저장)

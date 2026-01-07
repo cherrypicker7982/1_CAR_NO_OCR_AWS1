@@ -1,5 +1,6 @@
 1. EC2에 접속
 ssh -i "ec2_car_ocr.pem" ubuntu@54.252.130.252
+ssh -i "ec2_car_ocr.pem" ubuntu@16.184.13.168
 
 #root로 권한 변경법
 sudo su 
